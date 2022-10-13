@@ -19,7 +19,7 @@ spec:
       kind: Cluster
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           version: "1.23"
           roleArnSelector:
             matchControllerRef: true
@@ -110,7 +110,7 @@ spec:
       kind: Addon
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           addonName: vpc-cni
           addonVersion: "v1.11.2-eksbuild.1"
           resolveConflicts: OVERWRITE
@@ -138,7 +138,7 @@ spec:
       kind: Addon
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           addonName: coredns
           addonVersion: "v1.8.7-eksbuild.2"
           resolveConflicts: OVERWRITE
@@ -162,7 +162,7 @@ spec:
       kind: LaunchTemplate
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
          #launchTemplateName: patch
           launchTemplateData:
             metadataOptions:
@@ -252,7 +252,7 @@ spec:
       kind: NodeGroup
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           launchTemplate:
             nameSelector:
               matchControllerRef: true
@@ -559,7 +559,7 @@ spec:
       kind: VPC
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           cidrBlock: 23.0.0.0/16
           enableDnsSupport: true
           enableDnsHostNames: true
@@ -588,7 +588,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     ingress
           fromPort: 0
           toPort:   0
@@ -626,7 +626,7 @@ spec:
         forProvider:
           description: Control Plane communication with worker nodes
           groupName: ""
-          region: eu-central-1
+          region: eu-west-1
           ignoreEgress:  true
           ignoreIngress: true
           vpcIdSelector:
@@ -658,7 +658,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     egress
           fromPort: 0
           toPort:   0
@@ -686,7 +686,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     ingress
           fromPort: 0
           toPort:   0
@@ -717,7 +717,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     ingress
           fromPort: 0
           toPort:   0
@@ -748,13 +748,13 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1a
+          zone: eu-west-1a
           access: public
           #endpoint: 'true'
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1a
+          region: eu-west-1
+          availabilityZone: eu-west-1a
           cidrBlock: 23.0.0.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -797,13 +797,13 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1b
+          zone: eu-west-1b
           access: public
           #endpoint: 'true'
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1b
+          region: eu-west-1
+          availabilityZone: eu-west-1b
           cidrBlock: 23.0.1.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -846,12 +846,12 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1c
+          zone: eu-west-1c
           access: public
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1c
+          region: eu-west-1
+          availabilityZone: eu-west-1c
           cidrBlock: 23.0.2.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -895,13 +895,13 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1a
+          zone: eu-west-1a
           access: private
           endpoint: 'true'
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1a
+          region: eu-west-1
+          availabilityZone: eu-west-1a
           cidrBlock: 23.0.3.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -943,13 +943,13 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1b
+          zone: eu-west-1b
           access: private
           endpoint: 'true'
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1b
+          region: eu-west-1
+          availabilityZone: eu-west-1b
           cidrBlock: 23.0.4.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -991,12 +991,12 @@ spec:
       kind: Subnet
       metadata:
         labels:
-          zone: eu-central-1c
+          zone: eu-west-1c
           access: private
       spec:
         forProvider:
-          region: eu-central-1
-          availabilityZone: eu-central-1c
+          region: eu-west-1
+          availabilityZone: eu-west-1c
           cidrBlock: 23.0.5.0/24
           vpcIdSelector:
             matchControllerRef: true
@@ -1039,7 +1039,7 @@ spec:
       kind: InternetGateway
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           vpcIdSelector:
             matchControllerRef: true
           tags:
@@ -1063,14 +1063,14 @@ spec:
       kind: NATGateway
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           allocationIdSelector:
             matchControllerRef: true
           subnetIdSelector:
             matchControllerRef: true
             matchLabels:
              access: public
-             zone: eu-central-1a
+             zone: eu-west-1a
           connectivityType: public
           tags:
           - key: Name
@@ -1093,7 +1093,7 @@ spec:
       kind: Address
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           domain: vpc
           tags:
           - key: Name
@@ -1116,7 +1116,7 @@ spec:
       kind: RouteTable
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           vpcIdSelector:
             matchControllerRef: true
           routes:
@@ -1127,17 +1127,17 @@ spec:
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1a
+                zone: eu-west-1a
                 access: public
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1b
+                zone: eu-west-1b
                 access: public
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1c
+                zone: eu-west-1c
                 access: public
           tags:
           - key: Name
@@ -1178,10 +1178,10 @@ spec:
       kind: RouteTable
       metadata:
         labels:
-          zone: eu-central-1a
+          zone: eu-west-1a
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           ignoreRoutes: true
           vpcIdSelector:
             matchControllerRef: true
@@ -1189,7 +1189,7 @@ spec:
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1a
+                zone: eu-west-1a
                 access: private
           tags:
           - key: Name
@@ -1222,14 +1222,14 @@ spec:
       kind: Route
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           destinationCIDRBlock: "0.0.0.0/0"
           natGatewayIdSelector:
             matchControllerRef: true
           routeTableIdSelector:
             matchControllerRef: true
             matchLabels:
-              zone: eu-central-1a
+              zone: eu-west-1a
     patches:
     - fromFieldPath: spec.id
       toFieldPath:   metadata.name
@@ -1252,10 +1252,10 @@ spec:
       kind: RouteTable
       metadata:
         labels:
-          zone: eu-central-1b
+          zone: eu-west-1b
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           ignoreRoutes: true
           vpcIdSelector:
             matchControllerRef: true
@@ -1263,7 +1263,7 @@ spec:
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1b
+                zone: eu-west-1b
                 access: private
           tags:
           - key: Name
@@ -1297,14 +1297,14 @@ spec:
       
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           destinationCIDRBlock: "0.0.0.0/0"
           natGatewayIdSelector:
             matchControllerRef: true
           routeTableIdSelector:
             matchControllerRef: true
             matchLabels:
-              zone: eu-central-1b
+              zone: eu-west-1b
     patches:
     - fromFieldPath: spec.id
       toFieldPath:   metadata.name
@@ -1327,10 +1327,10 @@ spec:
       kind: RouteTable
       metadata:
         labels:
-          zone: eu-central-1c
+          zone: eu-west-1c
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           ignoreRoutes: true
           vpcIdSelector:
             matchControllerRef: true
@@ -1338,7 +1338,7 @@ spec:
           - subnetIdSelector:
               matchControllerRef: true
               matchLabels:
-                zone: eu-central-1c
+                zone: eu-west-1c
                 access: private
           tags:
           - key: Name
@@ -1372,14 +1372,14 @@ spec:
       
       spec:
         forProvider:
-          region: eu-central-1
+          region: eu-west-1
           destinationCIDRBlock: "0.0.0.0/0"
           natGatewayIdSelector:
             matchControllerRef: true
           routeTableIdSelector:
             matchControllerRef: true
             matchLabels:
-              zone: eu-central-1c
+              zone: eu-west-1c
     patches:
     - fromFieldPath: spec.id
       toFieldPath:   metadata.name
@@ -1920,7 +1920,7 @@ spec:
       transforms:
       - type: map
         map:
-          eu-central-1: 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
+          eu-west-1: 9e99a48a9960b14926bb7f3b02e22da2b0ab7280
   ######################################################################
   - name: aws-iam-role-attachment-external-secrets-operator
     base:
@@ -1957,7 +1957,7 @@ spec:
               provider:
                 aws:
                   service: SecretsManager
-                  region: eu-central-1
+                  region: eu-west-1
                   auth:
                     jwt:
                       serviceAccountRef:
@@ -2084,7 +2084,7 @@ spec:
                   }
                   provider "aws" {
                     shared_credentials_file = "aws-creds.ini"
-                    region = "eu-central-1"
+                    region = "eu-west-1"
                   }
     patches:
     - fromFieldPath: spec.id
@@ -2497,7 +2497,7 @@ spec:
       spec:
         forProvider:
          #name: patch
-          region: eu-central-1
+          region: eu-west-1
           securityGroupIdSelector:
             matchControllerRef: true
             matchLabels:
@@ -2536,7 +2536,7 @@ spec:
         forProvider:
           description: Allow traffic for K8s Ingress
           groupName: ""
-          region: eu-central-1
+          region: eu-west-1
           ignoreEgress:  true
           ignoreIngress: true
           vpcIdSelector:
@@ -2568,7 +2568,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     egress
           fromPort: 0
           toPort:   0
@@ -2596,7 +2596,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     ingress
           fromPort: 80
           toPort:   80
@@ -2625,7 +2625,7 @@ spec:
       kind: SecurityGroupRule
       spec:
         forProvider:
-          region:   eu-central-1
+          region:   eu-west-1
           type:     ingress
           fromPort: 443
           toPort:   443
@@ -2708,39 +2708,4 @@ spec:
             }
       policy:
         fromFieldPath: Required
-  ######################################################################
-  - name: k8s-xtrinity-configuration-package
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Configuration
-            metadata:
-              name: xtrinity
-            spec:
-              package: 518283773752.dkr.ecr.eu-central-1.amazonaws.com/xtrinity:0.1.0
-                       
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath: metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-xtrinity-package'
-    - fromFieldPath: spec.id
-      toFieldPath: spec.providerConfigRef.name
-    - type: CombineFromComposite
-      toFieldPath: spec.forProvider.manifest.spec.package
-      combine:
-        variables:
-        - fromFieldPath: status.accountID
-        - fromFieldPath: spec.parameters.region
-        - fromFieldPath: spec.parameters.xTrinityVersion
-        strategy: string
-        string:
-          fmt: "%s.dkr.ecr.%s.amazonaws.com/xtrinity:%s"
-      policy:
-        fromFieldPath: Required
+  
