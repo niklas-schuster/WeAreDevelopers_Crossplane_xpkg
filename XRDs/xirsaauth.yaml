@@ -1,0 +1,66 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xirsaauths.aws.community.day.dach
+spec:
+  group: aws.community.day.dach
+  names:
+    kind: XIrsaAuth
+    plural: xirsaauths
+  claimNames:
+    kind: IrsaAuth
+    plural: irsaauths
+  enforcedCompositionRef:
+    name: xirsaauths.aws.community.day.dach
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              service:
+                type: object
+                properties:
+                  name: 
+                    type: string
+                    description: Name of the targeted service. This will set the API Mapping Key for the domain names and is used in naming conventions
+                  stage:
+                    type: string
+                    description: "Name of the Stage. This can be one of the following values: dev, qa, prod"
+                required:
+                - name
+                - stage
+              parameters:
+                type: object
+                properties:
+                  oidcProvider:
+                    type: string
+                  serviceAccount:
+                    type: string
+                  policyDocument:
+                    type: string
+            required:
+            - service
+            - parameters
+          status:
+            type: object
+            properties:
+              account:
+                type: string
+              roleArn:
+                type: string
+              policyArn:
+                type: string
+              serviceAccountName:
+                description: Name of created Service Account
+                type: string
+    additionalPrinterColumns:
+    - name: ServiceAccount
+      type: string
+      jsonPath: ".status.serviceAccountName"

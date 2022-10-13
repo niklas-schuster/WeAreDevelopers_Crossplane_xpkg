@@ -1,0 +1,285 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xapigateways.aws.community.day.dach
+  labels:
+    provider: aws
+    platform: xTrinity
+spec:
+  compositeTypeRef:
+    apiVersion: aws.community.day.dach/v1alpha1
+    kind: XApiGateway
+  resources:
+  ######################################################################
+  - name: aws-apigateway
+    base:
+      apiVersion: apigatewayv2.aws.crossplane.io/v1alpha1
+      kind: API
+      spec:
+        forProvider:
+          region: eu-central-1
+    patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.service.name
+        - fromFieldPath: spec.service.stage
+        strategy: string
+        string:
+          fmt: "%s-%s"
+      toFieldPath: spec.forProvider.name
+    - fromFieldPath: spec.parameters.region
+      toFieldPath:   spec.forProvider.region
+    - fromFieldPath: spec.parameters.protocol
+      toFieldPath:   spec.forProvider.protocolType
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.apiID
+      toFieldPath: status.apiID
+    - fromFieldPath: spec.service.stage
+      toFieldPath:   metadata.annotations[aws.community.day.dach/stage]
+    - type: ToCompositeFieldPath
+      fromFieldPath: metadata.annotations[aws.community.day.dach/stage]
+      toFieldPath: status.account
+      policy:
+        fromFieldPath: Required
+      transforms:
+        - type: map
+          map:
+            dev: "518283773752"
+            qa:  "518283773752"
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.parameters.protocol
+        - fromFieldPath: spec.service.name
+        strategy: string
+        string:
+          fmt: "%s API for %s"
+      toFieldPath: spec.forProvider.description
+  ######################################################################
+  - name: aws-cloudwatch-loggroup
+    base:
+      apiVersion: cloudwatchlogs.aws.crossplane.io/v1alpha1
+      kind: LogGroup
+      spec:
+        forProvider:
+          retentionInDays: 30
+    patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.service.name
+        - fromFieldPath: spec.service.stage
+        strategy: string
+        string:
+          fmt: "/apigw/%s-%s"
+      toFieldPath: spec.forProvider.logGroupName
+    - fromFieldPath: spec.parameters.region
+      toFieldPath:   spec.forProvider.region
+    - fromFieldPath: spec.logging.rentention
+      toFieldPath:   spec.forProvider.retentionInDays
+  ######################################################################
+  - name: terraform-fetch-values
+    base:
+      apiVersion: tf.crossplane.io/v1alpha1
+      kind: Workspace
+      metadata:
+        name: example-test
+      spec:
+        forProvider:
+          source: Inline
+          # module: |
+      
+          #   data "aws_lb" "ingress_alb" {
+          #     name = "dev-cluster-services"
+          #   }
+
+          #   data "aws_lb_listener" "select80" {
+          #     load_balancer_arn = data.aws_lb.ingress_alb.arn
+          #     port = 80
+          #   }
+
+          #   output "listenerARN" {
+          #     value = data.aws_lb_listener.select80.arn
+          #   }
+
+          #   data "aws_eks_cluster" "cluster" {
+          #     name = "dev-cluster"
+          #   }
+
+          #   output "vpcLinkID" {
+          #     value = data.aws_eks_cluster.cluster.tags.vpcLinkID
+          #   }
+    patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.parameters.albName
+        - fromFieldPath: spec.parameters.clusterName
+        strategy: string
+        string:
+          fmt: |
+            data "aws_lb" "ingress_alb" {
+              name = "%s"
+            }
+
+            data "aws_lb_listener" "select80" {
+              load_balancer_arn = data.aws_lb.ingress_alb.arn
+              port = 80
+            }
+
+            output "listenerARN" {
+              value = data.aws_lb_listener.select80.arn
+            }
+
+            data "aws_eks_cluster" "cluster" {
+              name = "%s"
+            }
+
+            output "vpcLinkID" {
+              value = data.aws_eks_cluster.cluster.tags.vpcLinkID
+            }
+
+      toFieldPath: spec.forProvider.module
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.outputs.listenerARN
+      toFieldPath: status.listenerARN
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.outputs.vpcLinkID
+      toFieldPath: status.vpcLinkID
+  ######################################################################
+  - name: aws-apigateway-route
+    base:
+      apiVersion: apigatewayv2.aws.crossplane.io/v1alpha1
+      kind: Route
+      spec: 
+        forProvider:
+          region: eu-central-1
+          routeKey: 'GET /{proxy+}' 
+          apiIdSelector:
+            matchControllerRef: true
+    patches:
+    - fromFieldPath: status.integrationID
+      toFieldPath: spec.forProvider.target
+      transforms:
+      - type: string
+        string:
+          fmt: 'integrations/%s'
+      policy:
+        fromFieldPath: Required
+    # - fromFieldPath: spec.service.name
+    #   toFieldPath: spec.forProvider.routeKey
+    #   transforms:
+    #   - type: string
+    #     string:
+    #       fmt: 'GET /%s' 
+    
+  ######################################################################
+  - name: aws-apigateway-integration
+    base:
+      apiVersion: apigatewayv2.aws.crossplane.io/v1alpha1
+      kind: Integration
+      metadata:
+        name: test
+      spec: 
+        forProvider:
+          region: eu-central-1
+          apiIdSelector:
+            matchControllerRef: true
+          integrationType: HTTP_PROXY
+          connectionType: VPC_LINK
+          #connectionID: ankvvd
+          payloadFormatVersion: "1.0"
+          integrationMethod: ANY
+          #integrationURI: arn:aws:elasticloadbalancing:eu-central-1:518283773752:listener/net/k8s-dev-echoserv-9d32652495/d1677be8f3420537/ccb19672f3c8056c
+    patches:
+    - fromFieldPath: status.vpcLinkID
+      toFieldPath: spec.forProvider.connectionID
+      policy:
+        fromFieldPath: Required
+    - fromFieldPath: status.listenerARN
+      toFieldPath: spec.forProvider.integrationURI
+      policy:
+        fromFieldPath: Required
+    - type: ToCompositeFieldPath
+      fromFieldPath: status.atProvider.integrationID
+      toFieldPath: status.integrationID 
+  ######################################################################
+  - name: aws-apigateway-domain-mapping
+    base:
+      apiVersion: apigatewayv2.aws.crossplane.io/v1alpha1
+      kind: APIMapping
+      spec:
+        forProvider:
+          apiIdSelector:
+            matchControllerRef: true
+          stageSelector:
+            matchControllerRef: true
+    patches:
+    - type: CombineFromComposite
+      combine:
+        variables:
+        - fromFieldPath: spec.service.name
+        - fromFieldPath: spec.service.stage
+        strategy: string
+        string:
+          fmt: "%s-%s-cavors-mapping"
+      toFieldPath: metadata.name
+    - fromFieldPath: spec.parameters.region
+      toFieldPath:   spec.forProvider.region
+    - fromFieldPath: spec.parameters.domainName
+      toFieldPath:   spec.forProvider.domainName
+    - fromFieldPath: spec.service.name
+      toFieldPath:   spec.forProvider.apiMappingKey
+  ######################################################################
+  - name: apigw-stage
+    base:
+      apiVersion: apigatewayv2.aws.crossplane.io/v1alpha1
+      kind: Stage
+      metadata:
+        annotations:
+          crossplane.io/external-name: "$default"
+      spec:
+        forProvider:
+          apiIdSelector:
+            matchControllerRef: true
+          accessLogSettings:
+            format: "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"caller\":\"$context.identity.caller\",\"user\":\"$context.identity.user\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
+            destinationARN: ""
+    patches:
+    - fromFieldPath: spec.parameters.region
+      toFieldPath:   spec.forProvider.region
+    - fromFieldPath: spec.parameters.autoDeploy
+      toFieldPath:   spec.forProvider.autoDeploy
+    - type: CombineFromComposite
+      toFieldPath: spec.forProvider.accessLogSettings.destinationARN
+      combine:
+        variables:
+        - fromFieldPath: spec.parameters.region
+        - fromFieldPath: status.account
+        - fromFieldPath: spec.service.name
+        - fromFieldPath: spec.service.stage
+        strategy: string
+        string:
+          fmt: "arn:aws:logs:%s:%s:log-group:/apigw/%s-%s:*"
+      policy:
+        fromFieldPath: Required
+    # - fromFieldPath: spec.logging.format
+    #   toFieldPath: spec.forProvider.accessLogSettings.format
+    #   transforms:
+    #     - type: string
+    #       string:
+    #         fmt: |
+    #           {
+    #             "requestId":     "$context.requestId",
+    #             "ip":            "$context.identity.sourceIp",
+    #             "caller":        "$context.identity.caller",
+    #             "user":          "$context.identity.user",
+    #             "requestTime":   "$context.requestTime",
+    #             "httpMethod":    "$context.httpMethod",
+    #             "resourcePath":  "$context.resourcePath",
+    #             "status":        "$context.status",
+    #             "protocol":      "$context.protocol",
+    #             "responseLength":"$context.responseLength"
+    #           }
