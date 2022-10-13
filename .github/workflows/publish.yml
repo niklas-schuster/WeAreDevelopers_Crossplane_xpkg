@@ -9,8 +9,8 @@ on:
 
 jobs:
   Publish:
-    runs-on: atc-ubuntu-latest 
-
+    runs-on: ubuntu-latest
+ 
     steps:  
       - uses: actions/checkout@v2
       - uses: azure/setup-kubectl@v2.0
