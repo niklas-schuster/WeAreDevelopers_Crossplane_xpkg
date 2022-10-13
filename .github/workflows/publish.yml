@@ -40,6 +40,7 @@ jobs:
           curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
           sudo mv kubectl-crossplane /home/runner/actions-runner/_work/_tool/kubectl/1.23.6/x64
           kubectl crossplane build configuration --name aws-community-day-platform-api --ignore ".github/workflows/publish.yml"
+      
       - name: Push Configuration Package to ECR
         env:
           ECR_REGISTRY: ${{ steps.login.outputs.registry }}
