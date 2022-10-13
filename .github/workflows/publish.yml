@@ -1,0 +1,57 @@
+name: Publish Configuration Package
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  Publish:
+    runs-on: atc-ubuntu-latest 
+
+    steps:  
+      - uses: actions/checkout@v2
+      - uses: azure/setup-kubectl@v2.0
+        with:
+          version: 'v1.23.6' # default is latest stable
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+      
+      - name: Login to Amazon ECR
+        id: login
+        uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Determine Release Version
+        id: version
+        uses: ietf-tools/semver-action@v1
+        with:
+          token: ${{ github.token }}
+          branch: master
+      
+      - name: Build Crossplane Configuration Package
+        run: |
+          curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
+          sudo mv kubectl-crossplane /home/runner/actions-runner/_work/_tool/kubectl/1.23.6/x64
+          kubectl crossplane build configuration --name aws-community-day-platform-api --ignore ".github/workflows/publish.yml"
+      - name: Push Configuration Package to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login.outputs.registry }}
+          ECR_REPOSITORY: aws-community-day-platform-api
+          IMAGE_TAG: ${{ steps.version.outputs.nextStrict }}
+        run: kubectl crossplane push configuration $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f aws-community-day-platform-api.xpkg
+      
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.version.outputs.nextStrict }}
+          release_name: Release ${{ steps.version.outputs.nextStrict }}
+          body: Crossplane Configuration Package 
