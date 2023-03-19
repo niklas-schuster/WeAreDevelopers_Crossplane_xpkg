@@ -40,14 +40,14 @@ jobs:
           curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh
           ls -l
           sudo mv kubectl-crossplane /opt/hostedtoolcache/kubectl/1.23.6/x64
-          kubectl crossplane build configuration --name aws-community-day-platform-api --ignore ".github/workflows/publish.yml"
+          kubectl crossplane build configuration --name javaland-cloud-platform-api --ignore ".github/workflows/publish.yml"
       
       - name: Push Configuration Package to ECR
         env:
           ECR_REGISTRY: ${{ steps.login.outputs.registry }}
-          ECR_REPOSITORY: aws-community-day-platform-api
+          ECR_REPOSITORY: javaland-cloud-platform-api
           IMAGE_TAG: ${{ steps.version.outputs.nextStrict }}
-        run: kubectl crossplane push configuration $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f aws-community-day-platform-api.xpkg
+        run: kubectl crossplane push configuration $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f javaland-cloud-platform-api.xpkg
       
       - name: Create Release
         uses: actions/create-release@v1
