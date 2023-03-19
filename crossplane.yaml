@@ -2,22 +2,18 @@
 apiVersion: meta.pkg.crossplane.io/v1
 kind: Configuration
 metadata:
-  name: aws-community-day-dach-platform-api
+  name: javaland-cloud-platform-api
   annotations:
     meta.crossplane.io/maintainer: Niklas Schuster <niklas.schuster@nttdata.com>
-    meta.crossplane.io/source: github.com/niklas-schuster/aws-community-day-dach-platform-api
-    meta.crossplane.io/description: Crossplane Configuration Package for AWS Community Day Dach
+    meta.crossplane.io/source: github.com/niklas-schuster/JavaLand-2023-Platform-API
+    meta.crossplane.io/description: Crossplane Configuration Package for JavaLand 3023
 spec:
   crossplane:
     version: ">=v1.8.1"
   dependsOn:
     - provider: crossplane/provider-aws
       version:  ">=v0.30.0"
-    - provider: crossplane/provider-jet-aws
-      version:  ">=v0.5.0"
     - provider: crossplane/provider-helm
       version:  ">=v0.10.0"
     - provider: crossplane/provider-kubernetes
       version:  ">=v0.4.0"
-    - provider: crossplane/provider-terraform
-      version:  ">=v0.3.0"

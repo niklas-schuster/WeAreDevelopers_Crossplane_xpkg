@@ -2,9 +2,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xirsaauths.aws.community.day.dach
+  name: xirsaauths.javaland.cloud.platform.api
 spec:
-  group: aws.community.day.dach
+  group: javaland.cloud.platform.api
   names:
     kind: XIrsaAuth
     plural: xirsaauths
@@ -12,7 +12,7 @@ spec:
     kind: IrsaAuth
     plural: irsaauths
   enforcedCompositionRef:
-    name: xirsaauths.aws.community.day.dach
+    name: xirsaauths.javaland.cloud.platform.api
   versions:
   - name: v1alpha1
     served: true
@@ -52,10 +52,6 @@ spec:
             type: object
             properties:
               account:
-                type: string
-              roleArn:
-                type: string
-              policyArn:
                 type: string
               serviceAccountName:
                 description: Name of created Service Account

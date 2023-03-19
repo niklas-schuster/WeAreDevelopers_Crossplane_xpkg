@@ -1,0 +1,126 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xkubernetesclusters.javaland.cloud.platform.api
+spec:
+  group: javaland.cloud.platform.api
+  names:
+    kind: XKubernetesCluster
+    plural: xkubernetesclusters
+  claimNames:
+    kind: KubernetesCluster
+    plural: kubernetesclusters
+  enforcedCompositionRef:
+    name: xkubernetesclusters.javaland.cloud.platform.api
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID/Identifier of the Cluster
+              stage:
+                type: string
+                description: Stage of the Cluster
+              parameters:
+                type: object
+                description: Parameters used to customize the Cluster
+                properties:
+                  region:
+                    description: AWS region to be used
+                    type: string
+                    default: eu-central-1
+                  version:
+                    description: The Kubernetes version for the cluster
+                    type: string
+                  nodeSize:
+                    description: The size of the Nodes; small, medium, large
+                    type: string
+                    default: small
+                  minNodeCount:
+                    description: The minimum number of Nodes
+                    type: integer
+                    default: 1
+                required:
+                - nodeSize
+            required:
+            - id
+            - parameters
+          status:
+            type: object
+            properties:
+              clusterName:
+                description: The name of the cluster.
+                type: string
+              clusterARN:
+                description: The ARN of the cluster.
+                type: string
+              clusterEndpoint:
+                description: The API Server Endpoint of the cluster.
+                type: string
+              clusterCaData:
+                description: The Certificate Authority data of the cluster.
+                type: string
+              accountID:
+                description: The ID of the AWS Account
+                type: string
+              proxyEndpointDNSName:
+                description: The DNS name of created Proxy Endpoint.
+                type: string
+              irsaRoleArnExternalSecretsOperator:
+                description: IAM Role for IRSA for External Secrets Operator
+                type: string
+              irsaRoleArnCrossplaneAWSProvider:
+                description: IAM Role for IRSA for Crossplane AWS Provider
+                type: string
+              irsaRoleArnLoadBalancerController:
+                description: IAM Role for IRSA for AWS Load Balancer Controller
+                type: string
+              iamRoleArnNodegroup:
+                description: IAM Role for EKS Nodegroup.
+                type: string
+              iamRoleArnControlPlane:
+                description: IAM Role for EKS Control Plane.
+                type: string
+              securityGroupIDNodegroup:
+                description: ID of Security Group for EKS Nodegroup
+                type: string
+              securityGroupIDControlPlane:
+                description: ID of Security Group for EKS Control Plane
+                type: string
+              securityGroupIDEndpoint:
+                description: ID of Security Group for VPC Endpoint
+                type: string
+              securityGroupIDVpcLink:
+                description: ID of Security Group for VPC Link
+                type: string
+              vpcLinkID:
+                description: ID of VPC Link
+                type: string
+              oidcProvider:
+                description: The OIDC Provider for the EKS Cluster.
+                type: string
+              controlPlaneStatus:
+                description: The current status of the EKS Control Clane.
+                type: string
+              nodeGroupStatus:
+                description: The current status of the EKS Nodegroup.
+                type: string
+    additionalPrinterColumns:
+    - name: clusterName
+      type: string
+      jsonPath: ".status.clusterName"
+    - name: controlPlane
+      type: string
+      jsonPath: ".status.controlPlaneStatus"
+    - name: nodePool
+      type: string
+      jsonPath: ".status.nodeGroupStatus"

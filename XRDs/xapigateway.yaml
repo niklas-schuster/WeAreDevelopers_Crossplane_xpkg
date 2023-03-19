@@ -2,9 +2,9 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xapigateways.aws.community.day.dach
+  name: xapigateways.javaland.cloud.platform.api
 spec:
-  group: aws.community.day.dach
+  group: javaland.cloud.platform.api
   names:
     kind: XApiGateway
     plural: xapigateways
@@ -12,7 +12,7 @@ spec:
     kind: ApiGateway
     plural: apigateways
   enforcedCompositionRef:
-    name: xapigateways.aws.community.day.dach
+    name: xapigateways.javaland.cloud.platform.api
   versions:
   - name: v1alpha1
     served: true

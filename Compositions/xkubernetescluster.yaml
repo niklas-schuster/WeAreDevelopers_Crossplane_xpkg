@@ -2,14 +2,13 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: xk8sclusters.aws.community.day.dach
+  name: xkubernetesclusters.javaland.cloud.platform.api
   labels:
     provider: aws
-    platform: xTrinity
 spec:
   compositeTypeRef:
-    apiVersion: aws.community.day.dach/v1alpha1
-    kind: XK8sCluster
+    apiVersion: javaland.cloud.platform.api/v1alpha1
+    kind: XKubernetesCluster
   writeConnectionSecretsToNamespace: crossplane-system
   resources:
   ######################################################################
@@ -56,6 +55,17 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath: metadata.name
       toFieldPath: status.clusterName
+    - fromFieldPath: spec.stage
+      toFieldPath: metadata.labels.stage
+    - type: ToCompositeFieldPath
+      fromFieldPath: metadata.labels.stage
+      toFieldPath: status.accountID
+      transforms:
+      - type: map
+        map:
+          dev:  "518283773752"
+          qa:   "518283773752"
+          prod: "518283773752"
     # - type: ToCompositeFieldPath
     #   fromFieldPath: status.atProvider.arn
     #   toFieldPath: status.accountID
@@ -228,6 +238,8 @@ spec:
       combine:
         variables:
         - fromFieldPath: status.iamRoleArnNodegroup
+        - fromFieldPath: status.accountID
+        - fromFieldPath: status.accountID
         strategy: string
         string:
           fmt: |
@@ -236,10 +248,15 @@ spec:
               groups:
                 - system:bootstrappers
                 - system:nodes
-            - rolearn: arn:aws:iam::518283773752:role/dev-cluster-argocd-irsa-role
-              username: arn:aws:iam::518283773752:role/dev-cluster-argocd-irsa-role
+            - rolearn: arn:aws:iam::%s:role/ArgoCDControllerIRSARole
+              username: arn:aws:iam::%s:role/ArgoCDControllerIRSARole
               groups:
                 - system:masters
+            - rolearn: arn:aws:iam::518283773752:role/Deployer
+              username: deployer
+              groups:
+                - system:masters
+
       policy:
         fromFieldPath: Required
     - fromFieldPath: spec.id
@@ -381,16 +398,16 @@ spec:
     - type: ToCompositeFieldPath
       fromFieldPath: status.atProvider.arn
       toFieldPath: status.iamRoleArnNodegroup
-    - type: ToCompositeFieldPath
-      fromFieldPath: status.atProvider.arn
-      toFieldPath: status.accountID
-      transforms:
-      - type: string
-        string:
-          type: Regexp
-          regexp:
-            match: 'arn:aws:iam::(\d+):.*'
-            group: 1
+    # - type: ToCompositeFieldPath
+    #   fromFieldPath: status.atProvider.arn
+    #   toFieldPath: status.accountID
+    #   transforms:
+    #   - type: string
+    #     string:
+    #       type: Regexp
+    #       regexp:
+    #         match: 'arn:aws:iam::(\d+):.*'
+    #         group: 1
     - fromFieldPath: spec.id
       toFieldPath: metadata.labels.role
       transforms:
@@ -584,15 +601,15 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-control-plane
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
           region:   eu-west-1
           type:     ingress
           fromPort: 0
-          toPort:   0
-          protocol: "-1"
+          toPort:   65535
+          protocol: "tcp"
          #securityGroupId: patch
          #sourceSecurityGroupId: patch
     patches:
@@ -654,17 +671,16 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-nodegroup-egress
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
           region:   eu-west-1
           type:     egress
           fromPort: 0
-          toPort:   0
-          protocol: "-1"
-          cidrBlocks: 
-          - "0.0.0.0/0"
+          toPort:   65535
+          protocol: "tcp"
+          cidrBlock: "0.0.0.0/0"
          #securityGroupId: patch
     patches:
     - fromFieldPath: spec.id
@@ -682,15 +698,15 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-nodegroup-ingress-self
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
           region:   eu-west-1
           type:     ingress
           fromPort: 0
-          toPort:   0
-          protocol: "-1"
+          toPort:   65535
+          protocol: "tcp"
          #securityGroupId: patch
          #sourceSecurityGroupId: patch
     patches:
@@ -713,15 +729,15 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-nodegroup-ingress-control-plane
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
           region:   eu-west-1
           type:     ingress
           fromPort: 0
-          toPort:   0
-          protocol: "-1"
+          toPort:   65535
+          protocol: "tcp"
          #securityGroupId: patch
          #sourceSecurityGroupId: patch
     patches:
@@ -1444,204 +1460,204 @@ spec:
     readinessChecks:
     - type: None
   ######################################################################
-  - name: crossplane-k8s-provider-service-account
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: v1
-            kind: ServiceAccount
-            metadata:
-              name: provider-kubernetes
-              namespace: crossplane-system
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-k8s-provider-sa'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-k8s-provider-service-account
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: v1
+  #           kind: ServiceAccount
+  #           metadata:
+  #             name: provider-kubernetes
+  #             namespace: crossplane-system
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-k8s-provider-sa'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
+  # ######################################################################
+  # - name: crossplane-k8s-provider-cluster-role-binding
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: rbac.authorization.k8s.io/v1
+  #           kind: ClusterRoleBinding
+  #           metadata:
+  #             name: provider-kubernetes
+  #           subjects:
+  #           - kind: ServiceAccount
+  #             name: provider-kubernetes
+  #             namespace: crossplane-system
+  #           roleRef:
+  #             kind: ClusterRole
+  #             name: cluster-admin
+  #             apiGroup: rbac.authorization.k8s.io
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-k8s-provider-crb'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
+  # ######################################################################
+  # - name: crossplane-k8s-provider-controller-config
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1alpha1
+  #           kind: ControllerConfig
+  #           metadata:
+  #             name: provider-kubernetes
+  #           spec:
+  #             serviceAccountName: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-k8s-provider-cc'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-k8s-provider-cluster-role-binding
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: rbac.authorization.k8s.io/v1
-            kind: ClusterRoleBinding
-            metadata:
-              name: provider-kubernetes
-            subjects:
-            - kind: ServiceAccount
-              name: provider-kubernetes
-              namespace: crossplane-system
-            roleRef:
-              kind: ClusterRole
-              name: cluster-admin
-              apiGroup: rbac.authorization.k8s.io
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-k8s-provider-crb'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-k8s-provider
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1
+  #           kind: Provider
+  #           metadata:
+  #             name: crossplane-provider-kubernetes
+  #           spec:
+  #             package: crossplane/provider-kubernetes:v0.4.0
+  #             controllerConfigRef:
+  #               name: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-k8s-provider'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-k8s-provider-controller-config
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1alpha1
-            kind: ControllerConfig
-            metadata:
-              name: provider-kubernetes
-            spec:
-              serviceAccountName: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-k8s-provider-cc'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-aws-provider
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1
+  #           kind: Provider
+  #           metadata:
+  #             name: crossplane-provider-aws
+  #           spec:
+  #             package: crossplane/provider-aws:v0.30.0
+  #             controllerConfigRef:
+  #               name: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-aws-provider'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-k8s-provider
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: crossplane-provider-kubernetes
-            spec:
-              package: crossplane/provider-kubernetes:v0.4.0
-              controllerConfigRef:
-                name: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-k8s-provider'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-aws-jet-provider
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1
+  #           kind: Provider
+  #           metadata:
+  #             name: crossplane-provider-aws-jet
+  #           spec:
+  #             package: crossplane/provider-jet-aws:v0.5.0
+  #             controllerConfigRef:
+  #               name: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-aws-jet-provider'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-aws-provider
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: crossplane-provider-aws
-            spec:
-              package: crossplane/provider-aws:v0.30.0
-              controllerConfigRef:
-                name: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-aws-provider'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-helm-provider
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1
+  #           kind: Provider
+  #           metadata:
+  #             name: crossplane-provider-helm
+  #           spec:
+  #             package: crossplane/provider-helm:v0.10.0
+  #             controllerConfigRef:
+  #               name: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-helm-provider'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-aws-jet-provider
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: crossplane-provider-aws-jet
-            spec:
-              package: crossplane/provider-jet-aws:v0.5.0
-              controllerConfigRef:
-                name: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-aws-jet-provider'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
-  ######################################################################
-  - name: crossplane-helm-provider
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: crossplane-provider-helm
-            spec:
-              package: crossplane/provider-helm:v0.10.0
-              controllerConfigRef:
-                name: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-helm-provider'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
-  ######################################################################
-  - name: crossplane-terraform-provider
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: pkg.crossplane.io/v1
-            kind: Provider
-            metadata:
-              name: crossplane-provider-terraform
-            spec:
-              package: crossplane/provider-terraform:v0.3.0
-              controllerConfigRef:
-                name: provider-kubernetes
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath:   metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-terraform-provider'
-    - fromFieldPath: spec.id
-      toFieldPath:   spec.providerConfigRef.name
+  # - name: crossplane-terraform-provider
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: pkg.crossplane.io/v1
+  #           kind: Provider
+  #           metadata:
+  #             name: crossplane-provider-terraform
+  #           spec:
+  #             package: crossplane/provider-terraform:v0.3.0
+  #             controllerConfigRef:
+  #               name: provider-kubernetes
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-terraform-provider'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath:   spec.providerConfigRef.name
   ######################################################################
   - name: helm-release-crossplane
     base:
@@ -1654,7 +1670,25 @@ spec:
           chart:
             name: crossplane
             repository: https://charts.crossplane.io/stable
-            version: '1.8.1'
+            version: '1.11.1'
+          values:
+            replicas: 2
+            resourcesCrossplane:
+              limits:
+                cpu:	500m
+                memory:	2G
+              requests:
+                cpu: 500m
+                memory: 2G
+            resourcesRBACManager:
+              limits:
+                cpu:	250m
+                memory:	2G
+              requests:
+                cpu: 250m
+                memory: 2G
+            rbacManager:
+              replicas: 2
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -2027,74 +2061,74 @@ spec:
     - fromFieldPath: spec.id
       toFieldPath: spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-aws-provider-default-configuration
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: aws.crossplane.io/v1beta1
-            kind: ProviderConfig
-            metadata:
-              name: default
-            spec:
-              credentials:
-                source: Secret
-                secretRef:
-                  namespace: crossplane-system
-                  name: aws-creds
-                  key: creds
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath: metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-crossplane-aws-provider-default-config'
-    - fromFieldPath: spec.id
-      toFieldPath: spec.providerConfigRef.name
+  # - name: crossplane-aws-provider-default-configuration
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: aws.crossplane.io/v1beta1
+  #           kind: ProviderConfig
+  #           metadata:
+  #             name: default
+  #           spec:
+  #             credentials:
+  #               source: Secret
+  #               secretRef:
+  #                 namespace: crossplane-system
+  #                 name: aws-creds
+  #                 key: creds
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath: metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-crossplane-aws-provider-default-config'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath: spec.providerConfigRef.name
   ######################################################################
-  - name: crossplane-terraform-provider-default-configuration
-    base:
-      apiVersion: kubernetes.crossplane.io/v1alpha1
-      kind: Object
-      spec:
-        forProvider:
-          manifest:
-            apiVersion: tf.crossplane.io/v1alpha1
-            kind: ProviderConfig
-            metadata:
-              name: default
-            spec:
-              credentials:
-              - filename: aws-creds.ini
-                source: Secret
-                secretRef:
-                  namespace: crossplane-system
-                  name: aws-creds
-                  key: credentials
-              configuration: |
-                  terraform {
-                    backend "kubernetes" {
-                      secret_suffix     = "providerconfig-default"
-                      namespace         = "crossplane-system"
-                      in_cluster_config = true
-                    }
-                  }
-                  provider "aws" {
-                    shared_credentials_file = "aws-creds.ini"
-                    region = "eu-west-1"
-                  }
-    patches:
-    - fromFieldPath: spec.id
-      toFieldPath: metadata.name
-      transforms:
-      - type: string
-        string:
-          fmt: '%s-crossplane-terraform-provider-default-config'
-    - fromFieldPath: spec.id
-      toFieldPath: spec.providerConfigRef.name
+  # - name: crossplane-terraform-provider-default-configuration
+  #   base:
+  #     apiVersion: kubernetes.crossplane.io/v1alpha1
+  #     kind: Object
+  #     spec:
+  #       forProvider:
+  #         manifest:
+  #           apiVersion: tf.crossplane.io/v1alpha1
+  #           kind: ProviderConfig
+  #           metadata:
+  #             name: default
+  #           spec:
+  #             credentials:
+  #             - filename: aws-creds.ini
+  #               source: Secret
+  #               secretRef:
+  #                 namespace: crossplane-system
+  #                 name: aws-creds
+  #                 key: credentials
+  #             configuration: |
+  #                 terraform {
+  #                   backend "kubernetes" {
+  #                     secret_suffix     = "providerconfig-default"
+  #                     namespace         = "crossplane-system"
+  #                     in_cluster_config = true
+  #                   }
+  #                 }
+  #                 provider "aws" {
+  #                   shared_credentials_file = "aws-creds.ini"
+  #                   region = "eu-west-1"
+  #                 }
+  #   patches:
+  #   - fromFieldPath: spec.id
+  #     toFieldPath: metadata.name
+  #     transforms:
+  #     - type: string
+  #       string:
+  #         fmt: '%s-crossplane-terraform-provider-default-config'
+  #   - fromFieldPath: spec.id
+  #     toFieldPath: spec.providerConfigRef.name
   ######################################################################
   - name: aws-iam-policy-load-balancer-controller
     base:
@@ -2356,12 +2390,12 @@ spec:
       - type: string
         string:
           fmt: '%s-load-balancer-controller'
-    - fromFieldPath: spec.id
-      toFieldPath: metadata.annotations[crossplane.io/external-name]
-      transforms:
-      - type: string
-        string:
-          fmt: "eks-irsa-%s-role"
+    # - fromFieldPath: spec.id
+    #   toFieldPath: metadata.annotations[crossplane.io/external-name]
+    #   transforms:
+    #   - type: string
+    #     string:
+    #       fmt: "eks-irsa-%s-role"
     - type: ToCompositeFieldPath
       fromFieldPath: status.atProvider.arn
       toFieldPath: status.irsaRoleArnLoadBalancerController
@@ -2564,7 +2598,7 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-vpclink-egress
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
@@ -2572,9 +2606,8 @@ spec:
           type:     egress
           fromPort: 0
           toPort:   0
-          protocol: "-1"
-          cidrBlocks: 
-          - "0.0.0.0/0"
+          protocol: "tcp"
+          cidrBlock: "0.0.0.0/0"
           #securityGroupId: patch
     patches:
     - fromFieldPath: spec.id
@@ -2592,7 +2625,7 @@ spec:
   ######################################################################
   - name: aws-security-group-rule-vpclink-ingress-http
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
@@ -2601,10 +2634,8 @@ spec:
           fromPort: 80
           toPort:   80
           protocol: "tcp"
-          cidrBlocks:
-          - "23.0.3.0/24"
-          - "23.0.4.0/24"
-          - "23.0.5.0/24"
+          securityGroupId: #patch
+          sourceSecurityGroupId: #patch
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -2618,10 +2649,14 @@ spec:
       toFieldPath: spec.forProvider.securityGroupId
       policy:
         fromFieldPath: Required
+    - fromFieldPath: status.securityGroupIDNodegroup
+      toFieldPath: spec.forProvider.sourceSecurityGroupId
+      policy:
+        fromFieldPath: Required
   ######################################################################
   - name: aws-security-group-rule-vpclink-ingress-https
     base:
-      apiVersion: ec2.aws.jet.crossplane.io/v1alpha2
+      apiVersion: ec2.aws.crossplane.io/v1alpha1
       kind: SecurityGroupRule
       spec:
         forProvider:
@@ -2630,10 +2665,12 @@ spec:
           fromPort: 443
           toPort:   443
           protocol: "tcp"
-          cidrBlocks:
-          - "23.0.3.0/24"
-          - "23.0.4.0/24"
-          - "23.0.5.0/24"
+          securityGroupId: #patch
+          sourceSecurityGroupId: #patch
+          # cidrBlocks:
+          # - "23.0.3.0/24"
+          # - "23.0.4.0/24"
+          # - "23.0.5.0/24"
     patches:
     - fromFieldPath: spec.id
       toFieldPath: metadata.name
@@ -2645,6 +2682,10 @@ spec:
       toFieldPath:   spec.forProvider.region
     - fromFieldPath: status.securityGroupIDVpcLink
       toFieldPath: spec.forProvider.securityGroupId
+      policy:
+        fromFieldPath: Required
+    - fromFieldPath: status.securityGroupIDNodegroup
+      toFieldPath: spec.forProvider.sourceSecurityGroupId
       policy:
         fromFieldPath: Required
   ######################################################################
@@ -2679,7 +2720,7 @@ spec:
       - type: string
         string:
           fmt: '%s-secret'
-    - fromFieldPath: status.clusterARN
+    - fromFieldPath: spec.id
       toFieldPath: spec.forProvider.manifest.stringData.name
       policy:
         fromFieldPath: Required
@@ -2691,6 +2732,7 @@ spec:
       toFieldPath: spec.forProvider.manifest.stringData.config
       combine:
         variables:
+        #- fromFieldPath: status.accountID
         - fromFieldPath: status.clusterName
         - fromFieldPath: status.clusterCaData
         strategy: string
@@ -2698,12 +2740,11 @@ spec:
           fmt: |
             {
               "awsAuthConfig": {
-                  "roleARN": "arn:aws:iam::518283773752:role/dev-cluster-argocd-irsa-role",
+                  "roleARN": "arn:aws:iam::518283773752:role/Deployer",
                   "clusterName": "%s"
               },
               "tlsClientConfig": {
-                "caData": "%s",
-                "insecure": false
+                "caData": "%s"
               }
             }
       policy:
