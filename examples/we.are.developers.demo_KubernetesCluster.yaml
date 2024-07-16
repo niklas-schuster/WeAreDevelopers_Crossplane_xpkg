@@ -1,0 +1,39 @@
+---
+apiVersion: we.are.developers.demo/v1alpha1
+kind: XKubernetesCluster
+metadata:
+  name: test
+spec:
+  id: test
+  properties:
+    region: eu-west-2
+    networkCIDR: 12.0.0.0/16
+    version: "1.30"
+    subnets:
+    - cidrBlock: 12.0.0.0/20
+      availabilityZone: eu-west-2a
+      public: false
+    - cidrBlock: 12.0.16.0/20
+      availabilityZone: eu-west-2b
+      public: false
+    - cidrBlock: 12.0.32.0/20
+      availabilityZone: eu-west-2c
+      public: false
+    - cidrBlock: 12.0.48.0/20
+      availabilityZone: eu-west-2a
+      public: true
+    - cidrBlock: 12.0.64.0/20
+      availabilityZone: eu-west-2b
+      public: true
+    - cidrBlock: 12.0.80.0/20
+      availabilityZone: eu-west-2c
+      public: true
+    nodes:
+      type:  general-purpose
+      size:  medium
+      count: 3
+    auth:
+      role: arn:aws:iam::518283773752:role/AWSReservedSSO_AdministratorAccess_0d59eb192d59530a
+  compositionSelector:
+    matchLabels:
+      provider: aws

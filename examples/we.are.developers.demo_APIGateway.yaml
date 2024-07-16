@@ -1,0 +1,15 @@
+---
+apiVersion: we.are.developers.demo/v1alpha1
+kind: XAPIGateway
+metadata:
+  name: test
+spec:
+  service:
+    name: wad-demo
+    region: eu-west-2
+    cluster: test-eks-cluster
+  properties:
+    protocol: HTTP
+  compositionSelector:
+    matchLabels:
+      provider: aws

@@ -1,0 +1,21 @@
+---
+apiVersion: we.are.developers.demo/v1alpha1
+kind: XNoSQLDatabase
+metadata:
+  name: test
+spec:
+  service:
+    name: wad-demo
+    region: eu-west-2
+    cluster: test-eks-cluster
+    namespace: dev
+    serviceAccount: wad-demo-dev-sa
+  table:
+    name: TodoTable
+    attributes: 
+      - name: id
+        type: S
+    key: id
+  compositionSelector:
+    matchLabels:
+      provider: aws

@@ -1,0 +1,42 @@
+xpkg:
+  name:        we-are-developers-xpkg
+  maintainer:  Niklas Schuster <niklas.schuster@nttdata.com>
+  source:      github.com/niklas-schuster/WeAreDevelopers_Crossplane_xpkg
+  description: WeAreDevelopers Demo Configuration Package provides the XRDs and Compositions for the WeAreDevelopers demo setup using Crossplane
+  readme: |
+    WeAreDevelopers xpkg is a Crossplane Configuration package
+    that provides a collection of custom abstract cloud resources providing the
+    generell infrastructure for the WeAreDevelopers setup.
+    More information can be found in the GitLabproject on 
+    [GitHub](https://github.com/niklas-schuster/WeAreDevelopers_Crossplane_xpkg)
+  dependsOn:
+    crossplane: ">=v1.16.0"
+    providers:
+      - provider: xpkg.upbound.io/upbound/provider-aws-ec2
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/upbound/provider-aws-iam
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/upbound/provider-aws-eks
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/upbound/provider-aws-dynamodb
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/upbound/provider-aws-elbv2
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/upbound/provider-aws-apigatewayv2
+        version:  ">=v1.9.0"
+      - provider: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
+        version:  ">=v0.14.0"
+      - provider: xpkg.upbound.io/crossplane-contrib/provider-helm
+        version:  ">=v0.19.0"
+      - provider: xpkg.upbound.io/upbound/provider-terraform
+        version:  ">=v0.17.0"
+    functions:
+      - function: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform
+        version:  ">=v0.6.0"
+      - function: xpkg.upbound.io/crossplane-contrib/function-go-templating
+        version:  ">=v0.4.1"
+      - function: xpkg.upbound.io/crossplane-contrib/function-auto-ready
+        version:  ">=v0.2.1"
+      - function: xpkg.upbound.io/crossplane-contrib/function-sequencer
+        version:  ">=v0.1.2"
+

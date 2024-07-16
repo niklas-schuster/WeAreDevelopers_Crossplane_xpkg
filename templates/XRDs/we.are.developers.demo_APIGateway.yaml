@@ -1,0 +1,83 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xapigateways.we.are.developers.demo
+spec:
+  group:  we.are.developers.demo
+  names:
+    kind: XAPIGateway
+    plural: xapigateways
+  claimNames:
+    kind: APIGateway
+    plural: apigateways
+    categories:
+    - crossplane
+    - composite
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              service:
+                type: object
+                properties:
+                  name:
+                    description: The Region
+                    type: string
+                  region:
+                    description: The Region
+                    type: string
+                    default: eu-central-1
+                  cluster:
+                    description: The cluster name
+                    type: string   
+              properties:
+                type: object
+                properties:
+                  protocol:
+                    description: The Region
+                    type: string
+                    default: eu-central-1
+            required:
+            - service
+          status:
+            description: A Status represents the observed state
+            type: object
+            properties:
+              alb:
+                description: Freeform field containing status information for the ALB
+                type: object
+                properties:
+                  listenerARN:
+                    description: ARN of ALB Listener.
+                    type: string
+                  vpcID:
+                    description: ID of ALB VPC.
+                    type: string
+                  subnetIDs:
+                    description: IDs of ALB subnets.
+                    type: array
+                    items:
+                      type: string
+              vpcLink:
+                description: Freeform field containing status information for the VPC Link
+                type: object
+                properties:
+                  ID:
+                    description: ID of VPC Link.
+                    type: string
+              integration:
+                description: Freeform field containing status information for the Integration
+                type: object
+                properties:
+                  ID:
+                    description: ID of Integration.
+                    type: string
+                  

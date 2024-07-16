@@ -1,0 +1,24 @@
+---
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: {{ .Values.xpkg.name }}
+  annotations:
+    meta.crossplane.io/maintainer: {{ .Values.xpkg.maintainer | quote }}
+    meta.crossplane.io/source: {{ .Values.xpkg.source | quote }}
+    meta.crossplane.io/description: {{ .Values.xpkg.description | quote }}
+    meta.crossplane.io/readme: {{ .Values.xpkg.readme | quote }}
+spec:
+  crossplane:
+    version: {{ .Values.xpkg.dependsOn.crossplane | quote }}
+  dependsOn:
+{{- range $provider := .Values.xpkg.dependsOn.providers }}
+    - provider: {{ $provider.provider }}
+      version:  {{ $provider.version | quote }}
+{{- end }}
+{{- range $function := .Values.xpkg.dependsOn.functions }}
+    - function: {{ $function.function }}
+      version:  {{ $function.version | quote }}
+{{- end }}
+
+

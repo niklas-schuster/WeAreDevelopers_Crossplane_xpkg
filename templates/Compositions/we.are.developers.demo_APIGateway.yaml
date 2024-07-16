@@ -1,0 +1,173 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xapigateways.we.are.developers.demo
+  labels:
+    crossplane.io/xrd: xapigateways.we.are.developers.demo
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: we.are.developers.demo/v1alpha1
+    kind: XAPIGateway
+  mode: Pipeline
+  pipeline:
+  ####### VPC Link #######
+  - step: render-vpclink
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/apigatewayv2.aws.upbound.io_VPCLink.tpl") | nindent 12 }}
+  - step: patch-vpclink
+    functionRef:
+      name: crossplane-contrib-function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: vpclink
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.id"
+              toFieldPath:   "status.vpcLink.ID"
+  ####### Load Balancer #######
+  - step: fetch-values
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/tf.upbound.io_Workspace.tpl") | nindent 12 }}
+  - step: patch-workspace
+    functionRef:
+      name: crossplane-contrib-function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: fetch-values
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.outputs.listenerARN"
+              toFieldPath:   "status.alb.listenerARN"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.outputs.vpcID"
+              toFieldPath:   "status.alb.vpcID"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.outputs.subnetIDs"
+              toFieldPath:   "status.alb.subnetIDs"
+  ####### API Gateway #######
+  - step: render-api
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/apigatewayv2.aws.upbound.io_API.tpl") | nindent 12 }}
+  ####### Integration #######
+  - step: render-integration
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/apigatewayv2.aws.upbound.io_Integration.tpl") | nindent 12 }}
+  - step: patch-integration
+    functionRef:
+      name: crossplane-contrib-function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: integration
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.id"
+              toFieldPath:   "status.integration.ID"
+  ####### Route #######
+  - step: render-route
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/apigatewayv2.aws.upbound.io_Route.tpl") | nindent 12 }}
+  ####### Stage #######
+  - step: render-stage
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/apigatewayv2.aws.upbound.io_Stage.tpl") | nindent 12 }}
+  ####### VPC Link SecurityGroup #######
+  - step: render-vpclink-sg
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/ec2.aws.upbound.io_SecurityGroup.tpl") | nindent 12 }}
+  ####### VPC Link SecurityGroup #######
+  - step: render-vpclink-sg-ingress
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/ec2.aws.upbound.io_SecurityGroupIngressRule.tpl") | nindent 12 }}
+  ####### VPC Link SecurityGroup #######
+  - step: render-vpclink-sg-egress
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_APIGateway/ec2.aws.upbound.io_SecurityGroupEgressRule.tpl") | nindent 12 }}
+  ####### DETECT READY RESOURCES #######
+  - step: automatically-detect-ready-composed-resources
+    functionRef:
+      name: crossplane-contrib-function-auto-ready
+  ####### SET SEQUENCE #######
+  - step: set-sequence
+    functionRef:
+      name: crossplane-contrib-function-sequencer
+    input:
+      apiVersion: sequencer.fn.crossplane.io/v1beta1
+      kind: Input
+      rules:       
+        - sequence:
+          - fetch-values
+          - vpclink
+        - sequence:
+          - fetch-values
+          - vpclink=sg
+      

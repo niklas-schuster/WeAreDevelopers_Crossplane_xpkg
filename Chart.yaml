@@ -1,0 +1,8 @@
+apiVersion: v2
+name: we-are-developers-xpkg
+description: A Helm chart for generating the Crossplane Configuration Package for the WeAreDevelopers Demo
+type: application
+
+version: 1.0.0
+appVersion: "1.0.0"
+

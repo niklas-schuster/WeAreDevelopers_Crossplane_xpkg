@@ -1,0 +1,82 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xnosqldatabases.we.are.developers.demo
+spec:
+  group:  we.are.developers.demo
+  names:
+    kind: XNoSQLDatabase
+    plural: xnosqldatabases
+  claimNames:
+    kind: NoSQLDatabase
+    plural: nosqldatabases
+    categories:
+    - crossplane
+    - composite
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              service:
+                type: object
+                properties:
+                  name:
+                    description: The Region
+                    type: string
+                  region:
+                    description: The Region
+                    type: string
+                    default: eu-central-1
+                  cluster:
+                    description: The cluster name
+                    type: string  
+                  namespace:
+                    description: The namespace
+                    type: string
+                  serviceAccount: 
+                    description: The service account name
+                    type: string 
+              table:
+                type: object
+                properties:
+                  name:
+                    description: The name of the table
+                    type: string
+                  attributes:
+                    description: The attributes of the table
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          description: The name of the attribute
+                          type: string
+                        type:
+                          description: The type of the attribute
+                          type: string
+                  key:
+                    description: The key of the table
+                    type: string
+            required:
+            - service
+            - table
+          status:
+            description: A Status represents the observed state
+            type: object
+            properties:
+              cluster:
+                description: Freeform field containing status information for the cluster
+                type: object
+                properties:
+                  oidc:
+                    description: The OIDC Provider
+                    type: string
+                  

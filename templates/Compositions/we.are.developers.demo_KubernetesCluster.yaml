@@ -1,0 +1,391 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xkubernetesclusters.we.are.developers.demo
+  labels:
+    crossplane.io/xrd: xkubernetesclusters.we.are.developers.demo
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: we.are.developers.demo/v1alpha1
+    kind: XKubernetesCluster
+  mode: Pipeline
+  pipeline:
+  ####### VPC #######
+  - step: render-vpc
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{ (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_VPC.tpl") | nindent 12 }}
+  - step: patch-vpc
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: vpc
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.id"
+              toFieldPath:   "status.cluster.vpcID"
+  ####### SUBNETS #######
+  - step: render-subnets
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_Subnet.tpl") | nindent 12 }}
+  ####### INTERNET GATEWAY #######
+  - step: render-internet-gateway
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_InternetGateway.tpl") | nindent 12 }}
+  ####### NAT GATEWAY #######
+  - step: render-nat-gateways
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_NATGateway.tpl") | nindent 12 }}
+  ####### EIP #######
+  - step: render-eip
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_EIP.tpl") | nindent 12 }}
+  ####### SECURITY GROUPS #######
+  - step: render-security-groups
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_SecurityGroup.tpl") | nindent 12 }}
+  ####### ROUTE TABLES #######
+  - step: render-route-tables
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_RouteTable.tpl") | nindent 12 }}
+  ####### ROUTE TABLE ROUTES #######
+  - step: render-route-table-routes
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_Route.tpl") | nindent 12 }}
+  ####### MAIN ROUTE TABLES ASSOCIATIONS #######
+  - step: render-main-route-table-associations
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_MainRouteTableAssociation.tpl") | nindent 12 }}
+  ####### ROUTE TABLES ASSOCIATIONS #######
+  - step: render-route-table-associations
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/ec2.aws.upbound.io_RouteTableAssociation.tpl") | nindent 12 }}
+  ####### IAM ROLES #######
+  - step: render-iam-roles
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/iam.aws.upbound.io_Role.tpl") | nindent 12 }}
+  - step: patch-iam-roles
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: iam-role-argocd
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.arn"
+              toFieldPath:   "status.cluster.argocdRole"
+        - name: iam-role-alb-controller
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.arn"
+              toFieldPath:   "status.cluster.albControllerRole"
+  ####### IAM ROLE POLICY ATTACHEMENTS #######
+  - step: render-iam-role-policy-attachments
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/iam.aws.upbound.io_RolePolicyAttachement.tpl") | nindent 12 }}
+  #### EKS CLUSTER ####
+  ####### EKS CLUSTER #######
+  - step: render-eks-cluster
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/eks.aws.upbound.io_Cluster.tpl") | nindent 12 }}
+  - step: patch-eks-cluster
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: eks-cluster
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.id"
+              toFieldPath:   "status.cluster.name"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.arn"
+              toFieldPath:   "status.cluster.arn"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.identity[0].oidc[0].issuer"
+              toFieldPath:   "status.cluster.oidc"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.certificateAuthority[0].data"
+              toFieldPath:   "status.cluster.caData"
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.endpoint"
+              toFieldPath:   "status.cluster.endpoint"
+            # - type: ToCompositeFieldPath
+            #   fromFieldPath: "status.atProvider.identity[0].oidc[0].issuer"
+            #   toFieldPath:   "status.cluster.oidcUri"
+            #   transforms:
+            #     - type: TrimPrefix
+            #       string: https://
+            # - type: ToCompositeFieldPath
+            #   fromFieldPath: status.atProvider.roleArn
+            #   toFieldPath:   status.cluster.accountId
+            #   transforms:
+            #     - type: Regexp
+            #       match: arn:aws:iam::(\d+):.*
+            #       group: 1
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.vpcConfig[0].clusterSecurityGroupId"
+              toFieldPath:   "status.cluster.securityGroupId"
+  ####### EKS CLUSTER AUTH #######
+  - step: render-eks-cluster-auth
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/eks.aws.upbound.io_ClusterAuth.tpl") | nindent 12 }}
+  ####### EKS CLUSTER CROSSPLANE K8S PROVIDER CONFIG #######
+  - step: render-eks-cluster-crossplane-k8s-provider-config
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/kubernetes.crossplane.io_ProviderConfig.tpl") | nindent 12 }}
+  - step: patch-eks-cluster-crossplane-k8sm-provider-config
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: kubernetes-provider-config
+          readinessChecks:
+            - type: None
+  ####### EKS CLUSTER CROSSPLANE HELM PROVIDER CONFIG #######
+  - step: render-eks-cluster-crossplane-helm-provider-config
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/helm.crossplane.io_ProviderConfig.tpl") | nindent 12 }}
+  - step: patch-eks-cluster-crossplane-helm-provider-config
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: helm-provider-config
+          readinessChecks:
+            - type: None
+  ####### EKS ADDONS #######
+  - step: render-eks-addons
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/eks.aws.upbound.io_Addon.tpl") | nindent 12 }}
+  ####### EKS NODEGROUP #######
+  - step: render-eks-nodegroup
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/eks.aws.upbound.io_NodeGroup.tpl") | nindent 12 }}
+  - step: patch-eks-nodegroup
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: eks-nodegroup
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: status.atProvider.id
+              toFieldPath:   status.cluster.nodeGroup.name
+  ####### EKS CLUSTER OIDC PROVIDER #######
+  - step: render-eks-cluster-oidc-provider
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/iam.aws.upbound.io_OpenIDConnectProvider.tpl") | nindent 12 }}
+  ####### EKS CLUSTER OIDC PROVIDER #######
+  - step: render-helm releases
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/helm.crossplane.io_Release.tpl") | nindent 12 }}
+  ####### KUBERNETES OBJECTS #######
+  - step: render-kubernetes-objects
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- include "v1_ConfigMap-template" . | nindent 12 }}
+        {{- include "v1_Secret-template" . | nindent 12 }}
+        {{- include "v1_ServiceAccount-template" . | nindent 12 }}
+        {{- (.Files.Get "blueprints/we.are.developers.demo_KubernetesCluster/kubernetes.crossplane.io_Object.tpl") | nindent 12 }}
+  ####### DETECT READY RESOURCES #######
+  - step: automatically-detect-ready-composed-resources
+    functionRef:
+      name: function-auto-ready
+  ####### SET SEQUENCE #######
+  - step: set-sequence
+    functionRef:
+      name: function-sequencer
+    input:
+      apiVersion: sequencer.fn.crossplane.io/v1beta1
+      kind: Input
+      rules:       
+        # EKS CLUSTER
+        - sequence:
+          - eks-cluster
+          - eks-nodegroup
+        - sequence:
+          - eks-nodegroup
+          - aws-ebs-csi-driver
+        - sequence:
+          - eks-cluster
+          - vpc-cni     
+        - sequence:
+          - eks-cluster
+          - argocd-cluster 
+        - sequence:
+          - eks-cluster
+          - release-alb-controller 
+        - sequence:
+          - eks-cluster
+          - release-crossplane
+        # EKS CLUSTER AUTH
+        - sequence:
+          - eks-cluster
+          - cluster-auth
+        - sequence:
+          - cluster-auth
+          - kubernetes-provider-config
+        - sequence:
+          - cluster-auth
+          - helm-provider-config
+      

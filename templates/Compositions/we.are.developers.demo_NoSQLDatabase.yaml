@@ -1,0 +1,96 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnosqldatabases.we.are.developers.demo
+  labels:
+    crossplane.io/xrd: xnosqldatabases.we.are.developers.demo
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: we.are.developers.demo/v1alpha1
+    kind: XNoSQLDatabase
+  mode: Pipeline
+  pipeline:
+  ####### EKS CLUSTER #######
+  - step: render-eks-cluster
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_NoSQLDatabase/eks.aws.upbound.io_Cluster.tpl") | nindent 12 }}
+  - step: patch-eks-cluster
+    functionRef:
+      name: crossplane-contrib-function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+        - name: eks-cluster
+          patches:
+            - type: ToCompositeFieldPath
+              fromFieldPath: "status.atProvider.identity[0].oidc[0].issuer"
+              toFieldPath:   "status.cluster.oidc"
+  ####### DYNAMODB TABLE #######
+  - step: render-dynamodb-table
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_NoSQLDatabase/dynamodb.aws.upbound.io_Table.tpl") | nindent 12 }}
+  ####### IAM ROLE #######
+  - step: render-iam-role
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_NoSQLDatabase/iam.aws.upbound.io_Role.tpl") | nindent 12 }}
+  ####### IAM ROLE #######
+  - step: render-iam-policy
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_NoSQLDatabase/iam.aws.upbound.io_Policy.tpl") | nindent 12 }}
+  ####### IAM ROLE POLICY ATTACHEMENT #######
+  - step: render-iam-attachement
+    functionRef:
+      name: crossplane-contrib-function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+        {{- (.Files.Get "blueprints/we.are.developers.demo_NoSQLDatabase/iam.aws.upbound.io_RolePolicyAttachement.tpl") | nindent 12 }}
+  ####### DETECT READY RESOURCES #######
+  - step: automatically-detect-ready-composed-resources
+    functionRef:
+      name: crossplane-contrib-function-auto-ready
+  ####### SET SEQUENCE #######
+  - step: set-sequence
+    functionRef:
+      name: crossplane-contrib-function-sequencer
+    input:
+      apiVersion: sequencer.fn.crossplane.io/v1beta1
+      kind: Input
+      rules:       
+        - sequence:
+          - eks-cluster
+          - role
+      

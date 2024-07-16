@@ -1,0 +1,157 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xkubernetesclusters.we.are.developers.demo
+spec:
+  group:  we.are.developers.demo
+  names:
+    kind: XKubernetesCluster
+    plural: xkubernetesclusters
+  claimNames:
+    kind: KubernetesCluster
+    plural: kubernetesclusters
+    categories:
+    - crossplane
+    - composite
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              id:
+                type: string
+                description: ID/Identifier of the Universal Control Plane
+              properties:
+                type: object
+                properties:
+                  region:
+                    description: The Region
+                    type: string
+                    default: Frankfurt
+                  version:
+                    description: The Kubernetes Version
+                    type: string
+                  networkCIDR:
+                    description: The usable address space
+                    type: string
+                  subnets:
+                    description: Private and Public Subnets
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        selector:
+                          type: object
+                          additionalProperties:
+                            type: string
+                        cidrBlock:
+                          type: string
+                        availabilityZone:
+                          type: string
+                        public:
+                          type: boolean
+                  nodes:
+                    type: object
+                    description: EKS node configuration parameters.
+                    properties:
+                      count:
+                        type: integer
+                        description: Desired node count, from 1 to 100.
+                      type:
+                        type: string
+                        description: instance types associated with the Node Group.
+                        enum:
+                          - general-purpose
+                          - compute-optimized
+                          - memory-optimized
+                          - gpu-accelerated
+                        default: general-purpose
+                      size:
+                        type: string
+                        description: instance size associated with the Node Group.
+                        enum:
+                          - small
+                          - medium
+                          - large
+                        default: small
+                    required:
+                      - count
+                      - type
+                      - size
+                  auth:
+                    type: object
+                    description: IAM configuration to connect as ClusterAdmin.
+                    properties:
+                      role:
+                        description: The IAM Role ARN to connect as ClusterAdmin.
+                        type: string
+                        default: roleArn
+                      user:
+                        description: The IAM User ARN to connect as ClusterAdmin.
+                        type: string
+                        default: userArn
+                      autoscaler:
+                        description: The AutoScaler Role ARN to connect as ClusterAdmin.
+                        type: string
+                        default: autoscalerArn
+            required:
+            - id
+            - properties
+          status:
+            description: A Status represents the observed state
+            type: object
+            properties:
+              cluster:
+                description: Freeform field containing status information for the EKS Cluster
+                type: object
+                properties:
+                  vpcID:
+                    description: The VPC ID.
+                    type: string
+                  name:
+                    description: The cluster name.
+                    type: string
+                  arn:
+                    description: The ARN of the cluster.
+                    type: string
+                  oidc:
+                    description: The OIDC issuer URL.
+                    type: string
+                  oidcUri:
+                    description: The OIDC issuer URL.
+                    type: string
+                  caData:
+                    description: The CA Data.
+                    type: string
+                  endpoint:
+                    description: The API Endpoint.
+                    type: string
+                  argocdRole:
+                    description: The API Endpoint.
+                    type: string
+                  albControllerRole:
+                    description: The API Endpoint.
+                    type: string
+                  securityGroupId:
+                    description: The Security Group ID.
+                    type: string
+                  accountId:  
+                    description: The AWS Account ID.
+                    type: string
+                  nodeGroup:
+                    description: Freeform field containing status information for the EKS Nodegroup
+                    type: object
+                    properties:
+                      name:
+                        description: The NodeGroup name.
+                        type: string
+                      IAMRole:
+                        description: The IAM Role ARN.
+                        type: string
